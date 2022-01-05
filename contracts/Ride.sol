@@ -1,4 +1,6 @@
 pragma solidity ^0.5;
+pragma experimental ABIEncoderV2;
+
 
 contract Ride{
     struct Location {
@@ -8,7 +10,7 @@ contract Ride{
     struct Driver {
         address id;
         string carPlate;
-        uint carSize;
+        uint8 carSize;
         bool availabilty;  
     }
     struct Request {
@@ -20,6 +22,12 @@ contract Ride{
         bool driverConfirmation;
         bool userConfirmation;
     }
+    
+    // Declare Events
+    event DriverAdded(address driver, string carPlate, uint8 carSize);
+    event AvailabiltyChanged(address driver, bool availabilty);
+    event LocationChanged(address driver,Location location );
+
 
     mapping(address => Location) public locations;
     mapping(address => Driver) public drivers;
@@ -34,18 +42,23 @@ contract Ride{
     function setLocation(uint _latitude, uint _longtitude ) public  {
         locations[msg.sender].latitude = _latitude;
         locations[msg.sender].longtitude = _longtitude;
+
+        emit LocationChanged(msg.sender, locations[msg.sender]);
     }
 
-    function addDriverInformation(string memory _carPlate, uint _carSize) public {
+    function addDriverInformation(string memory _carPlate, uint8 _carSize) public {
         drivers[msg.sender].carSize = _carSize;
         drivers[msg.sender].carPlate = _carPlate;
         drivers[msg.sender].availabilty = false;
         drivers[msg.sender].id = msg.sender;
 
+
+        emit DriverAdded(msg.sender, _carPlate, _carSize);
     }
 
     function changeAvailabilty(bool _available) public isDriver(msg.sender) {
         drivers[msg.sender].availabilty = _available;
+        emit AvailabiltyChanged(msg.sender, _available);
     }
 
 
@@ -54,10 +67,14 @@ contract Ride{
 
         rideRequests[msg.sender].user = msg.sender;
         rideRequests[msg.sender].driver = _driver;
+
+        // NEED TO REFACTORED
         rideRequests[msg.sender].startPoint.longtitude = _startLongtitude;
         rideRequests[msg.sender].startPoint.latitude = _startLatitude;
         rideRequests[msg.sender].endPoint.longtitude = _endLongtitude;
         rideRequests[msg.sender].endPoint.latitude = _endLatitude;
+        // 
+        
         rideRequests[msg.sender].cost = _cost;
         rideRequests[msg.sender].driverConfirmation = false;
         rideRequests[msg.sender].userConfirmation = false;
